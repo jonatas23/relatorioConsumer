@@ -29,6 +29,6 @@ public class RelatorioKafkaConsumer {
         log.info("Particao = {}", partition);
         log.info("Evento Recebido = {}", solicitacaoRelatorio);
 
-        this.service.atualizarStatus(solicitacaoRelatorio);
+        this.service.processarRelatorio(solicitacaoRelatorio);
     }
 }

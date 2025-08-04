@@ -4,6 +4,7 @@ import lombok.Getter;
 
 @Getter
 public enum StatusRelatorio {
+    EM_FILA("Em Fila", "Relatorio está em fila de execução"),
     AGENDADO("Agendado", "Relatório foi agendado para processamento"),
     EM_EXECUCAO("Em Execução", "Relatório está sendo processado"),
     CONCLUIDO("Concluído", "Relatório foi gerado com sucesso"),
@@ -23,7 +24,7 @@ public enum StatusRelatorio {
      */
     public boolean podeTransicionarPara(StatusRelatorio proximoStatus) {
         return switch (this) {
-            case AGENDADO -> proximoStatus == EM_EXECUCAO || proximoStatus == CANCELADO;
+            case AGENDADO, EM_FILA -> proximoStatus == EM_EXECUCAO || proximoStatus == CANCELADO;
             case EM_EXECUCAO -> proximoStatus == CONCLUIDO || proximoStatus == FALHA || proximoStatus == CANCELADO;
             case CONCLUIDO, FALHA, CANCELADO -> false; // Status finais
         };
@@ -41,7 +42,7 @@ public enum StatusRelatorio {
      */
     public StatusRelatorio proximoStatus() {
         return switch (this) {
-            case AGENDADO -> EM_EXECUCAO;
+            case AGENDADO, EM_FILA -> EM_EXECUCAO;
             case EM_EXECUCAO -> CONCLUIDO;
             case CONCLUIDO, FALHA, CANCELADO -> null; // Sem próximo status
         };

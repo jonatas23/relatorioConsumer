@@ -5,11 +5,12 @@ import lombok.Getter;
 @Getter
 public enum TipoRelatorio {
     FOLHA_PAGAMENTO("FOLHA_PAGAMENTO", "Folha de Pagamento"),
-    DEMONSTRATIVO_FINANCEIRO("DEMONSTRATIVO_FINANCEIRO", "Demonstrativo Financeiro"),
-    BALANCETE("BALANCETE", "Balancete"),
-    RELATORIO_ORCAMENTARIO("RELATORIO_ORCAMENTARIO", "Relatório Orçamentário"),
-    PRESTACAO_CONTAS("PRESTACAO_CONTAS", "Prestação de Contas"),
-    RELATORIO_PATRIMONIAL("RELATORIO_PATRIMONIAL", "Relatório Patrimonial");
+    DESPESAS_ORCAMENTARIAS("DESPESAS_ORCAMENTARIAS", "Despesas Orçamentárias"),
+    RECEITAS_TRIBUTARIAS("RECEITAS_TRIBUTARIAS", "Receitas Tributárias"),
+    BALANCO_PATRIMONIAL("BALANCO_PATRIMONIAL", "Balanço Patrimonial"),
+    DEMONSTRATIVO_RESULTADOS("DEMONSTRATIVO_RESULTADOS", "Demonstrativo de Resultados"),
+    EXECUCAO_ORCAMENTARIA("EXECUCAO_ORCAMENTARIA", "Execução Orçamentária"),
+    POSICAO_FINANCEIRA("POSICAO_FINANCEIRA", "Posição Financeira");
 
     private final String codigo;
     private final String descricao;
