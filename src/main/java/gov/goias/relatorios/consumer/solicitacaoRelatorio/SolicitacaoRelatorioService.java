@@ -1,11 +1,8 @@
-package gov.goias.relatorios.consumer.relatorio;
+package gov.goias.relatorios.consumer.solicitacaoRelatorio;
 
-import gov.goias.relatorios.consumer.dto.NotificationMessage;
-import gov.goias.relatorios.consumer.dto.NotificationType;
-import gov.goias.relatorios.consumer.entity.SolicitacaoRelatorio;
-import gov.goias.relatorios.consumer.enuns.StatusRelatorio;
-import gov.goias.relatorios.consumer.producer.KafkaProducer;
-import gov.goias.relatorios.consumer.repository.SolicitacaoRelatorioRepository;
+import gov.goias.relatorios.consumer.notificacao.NotificacaoService;
+import gov.goias.relatorios.consumer.solicitacaoRelatorio.entity.SolicitacaoRelatorio;
+import gov.goias.relatorios.consumer.solicitacaoRelatorio.entity.enuns.StatusRelatorio;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Random;
-import java.util.UUID;
 
 @Service
 @Slf4j
@@ -23,18 +19,15 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class SolicitacaoRelatorioService {
 
-    private final KafkaProducer producer;
+    private final NotificacaoService notificacaoService;
     private final SolicitacaoRelatorioRepository repository;
     private final Random random = new Random();
 
-    @Value("${kafka.topic.relatorio.notificacao}")
-    private String topicNotificacao;
-
     @Value("${relatorio.simulation.error-rate:0.2}")
-    private double errorRate; // 20% de chance de erro por padrão
+    private double errorRate;
 
     @Value("${relatorio.simulation.processing-delay:5000}")
-    private long processingDelay; // 5 segundos de delay para simular processamento
+    private long processingDelay;
 
     public SolicitacaoRelatorio processarRelatorio(SolicitacaoRelatorio solicitacao) {
         log.info("Iniciando processamento para solicitação: {} - Status atual: {}",
@@ -73,7 +66,7 @@ public class SolicitacaoRelatorioService {
         solicitacaoAtualizada = processarProximaEtapa(solicitacaoAtualizada);
 
         // Envia notificação após a atualização
-        this.notificar(solicitacaoAtualizada);
+        this.notificacaoService.notificar(solicitacaoAtualizada);
 
         return solicitacaoAtualizada;
     }
@@ -82,7 +75,7 @@ public class SolicitacaoRelatorioService {
         StatusRelatorio statusAtual = solicitacao.getStatus();
 
         switch (statusAtual) {
-            case AGENDADO -> {
+            case AGENDADO, EM_FILA -> {
                 return iniciarProcessamento(solicitacao);
             }
             case EM_EXECUCAO -> {
@@ -284,95 +277,6 @@ public class SolicitacaoRelatorioService {
         return mensagensErro[random.nextInt(mensagensErro.length)];
     }
 
-    public void notificar(SolicitacaoRelatorio relatorio) {
-        log.info("Enviando notificação para usuário: {} - Status: {}",
-                relatorio.getUsuario(), relatorio.getStatus());
-
-        try {
-            NotificationMessage notification = criarNotificacao(relatorio);
-            this.producer.publicar(this.topicNotificacao, notification);
-            log.info("Notificação enviada com sucesso para usuário: {}", relatorio.getUsuario());
-
-        } catch (Exception e) {
-            log.error("Erro ao processar notificação: {}", e.getMessage(), e);
-
-            // Envia notificação de erro como fallback
-            try {
-                NotificationMessage errorNotification = NotificationMessage.builder()
-                        .id(UUID.randomUUID().toString())
-                        .codgUsuario(relatorio.getUsuario())
-                        .type(NotificationType.REPORT_FAILED)
-                        .title("Erro no Sistema")
-                        .message("Houve um erro interno. Tente novamente mais tarde.")
-                        .build();
-
-                this.producer.publicar(this.topicNotificacao, errorNotification);
-                concluirComFalha(relatorio);
-            } catch (Exception fallbackError) {
-                log.error("Erro crítico: falha ao enviar notificação de erro: {}", fallbackError.getMessage());
-            }
-        }
-    }
-
-    private NotificationMessage criarNotificacao(SolicitacaoRelatorio relatorio) {
-        String titulo;
-        String mensagem;
-        NotificationType tipo;
-
-        switch (relatorio.getStatus()) {
-            case EM_EXECUCAO -> {
-                tipo = NotificationType.REPORT_PROCESSING;
-                titulo = "Relatório em Processamento";
-                mensagem = String.format("O relatório %s está sendo gerado. Progresso: %d%%",
-                        relatorio.getTipoRelatorio().getDescricao(),
-                        relatorio.getProgresso() != null ? relatorio.getProgresso() : 0);
-            }
-            case CONCLUIDO -> {
-                tipo = NotificationType.REPORT_COMPLETED;
-                titulo = "Relatório Concluído";
-                mensagem = String.format("O relatório %s foi gerado com sucesso e está disponível para download! Tamanho: %s",
-                        relatorio.getTipoRelatorio().getDescricao(),
-                        formatarTamanhoArquivo(relatorio.getTamanhoArquivo()));
-            }
-            case FALHA -> {
-                tipo = NotificationType.REPORT_FAILED;
-                titulo = "Falha na Geração do Relatório";
-                mensagem = String.format("Houve um erro ao gerar o relatório %s: %s",
-                        relatorio.getTipoRelatorio().getDescricao(),
-                        relatorio.getMensagemStatus());
-            }
-            case CANCELADO -> {
-                tipo = NotificationType.REPORT_CANCELLED;
-                titulo = "Relatório Cancelado";
-                mensagem = String.format("O relatório %s foi cancelado.",
-                        relatorio.getTipoRelatorio().getDescricao());
-            }
-            default -> {
-                tipo = NotificationType.REPORT_PROCESSING;
-                titulo = "Status do Relatório";
-                mensagem = String.format("Status do relatório %s atualizado para: %s",
-                        relatorio.getTipoRelatorio().getDescricao(),
-                        relatorio.getStatus().getDescricao());
-            }
-        }
-
-        return NotificationMessage.builder()
-                .id(UUID.randomUUID().toString())
-                .codgUsuario(relatorio.getUsuario())
-                .type(tipo)
-                .title(titulo)
-                .message(mensagem)
-                .build();
-    }
-
-    private String formatarTamanhoArquivo(Long tamanhoBytes) {
-        if (tamanhoBytes == null) return "N/A";
-
-        if (tamanhoBytes < 1024) return tamanhoBytes + " B";
-        if (tamanhoBytes < 1024 * 1024) return String.format("%.1f KB", tamanhoBytes / 1024.0);
-        return String.format("%.1f MB", tamanhoBytes / (1024.0 * 1024.0));
-    }
-
     /**
      * Método para forçar transição para um status específico (usar com cuidado)
      */
@@ -394,7 +298,7 @@ public class SolicitacaoRelatorioService {
             }
 
             repository.save(solicitacao);
-            this.notificar(solicitacao);
+            this.notificacaoService.notificar(solicitacao);
 
             log.info("Status forçado com sucesso: {} -> {} para solicitação: {}",
                     statusAnterior, novoStatus, idSolicitacao);

@@ -1,7 +1,7 @@
-package gov.goias.relatorios.consumer.repository;
+package gov.goias.relatorios.consumer.solicitacaoRelatorio;
 
-import gov.goias.relatorios.consumer.entity.SolicitacaoRelatorio;
-import gov.goias.relatorios.consumer.enuns.StatusRelatorio;
+import gov.goias.relatorios.consumer.solicitacaoRelatorio.entity.SolicitacaoRelatorio;
+import gov.goias.relatorios.consumer.solicitacaoRelatorio.entity.enuns.StatusRelatorio;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

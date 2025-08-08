@@ -1,4 +1,4 @@
-package gov.goias.relatorios.consumer.dto;
+package gov.goias.relatorios.consumer.notificacao.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

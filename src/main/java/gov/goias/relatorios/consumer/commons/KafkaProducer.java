@@ -1,4 +1,4 @@
-package gov.goias.relatorios.consumer.producer;
+package gov.goias.relatorios.consumer.commons;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;

@@ -1,7 +1,7 @@
-package gov.goias.relatorios.consumer.relatorio;
+package gov.goias.relatorios.consumer.solicitacaoRelatorio;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import gov.goias.relatorios.consumer.entity.SolicitacaoRelatorio;
+import gov.goias.relatorios.consumer.solicitacaoRelatorio.entity.SolicitacaoRelatorio;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -19,7 +19,9 @@ public class RelatorioKafkaConsumer {
 
     private final SolicitacaoRelatorioService service;
 
-    @KafkaListener(topics = "${kafka.topic.relatorio.solicitacao}", groupId = "relatorio-group")
+    @KafkaListener(topics = "${kafka.topic.relatorio.solicitacao}",
+            groupId = "relatorio-group",
+            containerFactory = "solicitacaoKafkaListenerFactory")
     @Retryable(value = {Exception.class}, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2), exclude = {JsonProcessingException.class})
     public void consumir(@Payload SolicitacaoRelatorio solicitacaoRelatorio,
                          @Header(KafkaHeaders.RECEIVED_KEY) String key,

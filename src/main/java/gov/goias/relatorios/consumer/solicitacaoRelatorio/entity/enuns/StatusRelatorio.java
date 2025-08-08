@@ -1,4 +1,4 @@
-package gov.goias.relatorios.consumer.enuns;
+package gov.goias.relatorios.consumer.solicitacaoRelatorio.entity.enuns;
 
 import lombok.Getter;
 

@@ -1,11 +1,11 @@
-package gov.goias.relatorios.consumer.entity;
+package gov.goias.relatorios.consumer.solicitacaoRelatorio.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
-import gov.goias.relatorios.consumer.enuns.StatusRelatorio;
-import gov.goias.relatorios.consumer.enuns.TipoRelatorio;
+import gov.goias.relatorios.consumer.solicitacaoRelatorio.entity.enuns.StatusRelatorio;
+import gov.goias.relatorios.consumer.solicitacaoRelatorio.entity.enuns.TipoRelatorio;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -36,6 +36,8 @@ public class SolicitacaoRelatorio {
     @Column(nullable = false)
     private String sistema;
 
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     @Column(name = "agendar_para")
     private LocalDateTime agendarPara;
 
